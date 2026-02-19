@@ -9,10 +9,10 @@ exports.getAllReports = async (req, res) => {
     
     let query = `
       SELECT r.*, 
-             b.id, b.location as bin_location,
+      b.bin_id, b.location as bin_location,
              u.name as reporter_name
       FROM reports r
-      LEFT JOIN bins b ON r.bin_id = b.id
+      LEFT JOIN bins b ON r.bin_id = b.bin_id
       LEFT JOIN users u ON r.user_id = u.id
       WHERE 1=1
     `;
@@ -64,10 +64,10 @@ exports.getReport = async (req, res) => {
   try {
     const [reports] = await db.query(
       `SELECT r.*, 
-              b.id, b.location as bin_location,
+              b.bin_id, b.location as bin_location,
               u.name as reporter_name, u.email as reporter_email, u.phone as reporter_phone
        FROM reports r
-       LEFT JOIN bins b ON r.bin_id = b.id
+       LEFT JOIN bins b ON r.bin_id = b.bin_id
        LEFT JOIN users u ON r.user_id = u.id
        WHERE r.id = ?`,
       [req.params.id]
@@ -129,9 +129,9 @@ exports.createReport = async (req, res) => {
     );
 
     const [newReport] = await db.query(
-      `SELECT r.*, b.id, b.location as bin_location, u.name as reporter_name
+      `SELECT r.*, b.bin_id, b.location as bin_location, u.name as reporter_name
        FROM reports r
-       LEFT JOIN bins b ON r.bin_id = b.id
+       LEFT JOIN bins b ON r.bin_id = b.bin_id
        LEFT JOIN users u ON r.user_id = u.id
        WHERE r.id = ?`,
       [result.insertId]
@@ -190,7 +190,7 @@ exports.updateReport = async (req, res) => {
     }
 
     // Check if user has permission to edit this report
-    if (req.user.role === 'citizen' && reports[0].user_id !== req.user.id) {
+    if (reports.length > 0 && req.user.role === 'citizen' && reports[0].user_id !== req.user.id) {
       return res.status(403).json({
         success: false,
         message: 'Not authorized to edit this report'
@@ -201,22 +201,22 @@ exports.updateReport = async (req, res) => {
     const params = [];
 
     // Citizens can edit basic fields if it's their report
-    if (bin_id && (req.user.role === 'citizen' && reports[0].user_id === req.user.id)) {
+    if (reports.length > 0 && bin_id && (req.user.role === 'citizen' && reports[0].user_id === req.user.id)) {
       updateFields.push('bin_id = ?');
       params.push(bin_id);
     }
 
-    if (issue_type && (req.user.role === 'citizen' && reports[0].user_id === req.user.id)) {
+    if (reports.length > 0 && issue_type && (req.user.role === 'citizen' && reports[0].user_id === req.user.id)) {
       updateFields.push('issue_type = ?');
       params.push(issue_type);
     }
 
-    if (description && (req.user.role === 'citizen' && reports[0].user_id === req.user.id)) {
+    if (reports.length > 0 && description && (req.user.role === 'citizen' && reports[0].user_id === req.user.id)) {
       updateFields.push('description = ?');
       params.push(description);
     }
 
-    if (priority && (req.user.role === 'citizen' && reports[0].user_id === req.user.id)) {
+    if (reports.length > 0 && priority && (req.user.role === 'citizen' && reports[0].user_id === req.user.id)) {
       updateFields.push('priority = ?');
       params.push(priority);
     }
@@ -250,16 +250,16 @@ exports.updateReport = async (req, res) => {
     }
 
     const [updatedReport] = await db.query(
-      `SELECT r.*, b.id, b.location as bin_location, u.name as reporter_name
+      `SELECT r.*, b.bin_id, b.location as bin_location, u.name as reporter_name
        FROM reports r
-       LEFT JOIN bins b ON r.bin_id = b.id
+       LEFT JOIN bins b ON r.bin_id = b.bin_id
        LEFT JOIN users u ON r.user_id = u.id
        WHERE r.id = ?`,
       [req.params.id]
     );
 
     // Notify reporter if status changed (with error handling)
-    if (status) {
+    if (status && reports.length > 0 && reports[0].status !== status) {
       try {
         await db.query(
           `INSERT INTO notifications (user_id, title, message, type, related_entity_type, related_entity_id)

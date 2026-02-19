@@ -9,8 +9,8 @@ exports.getAllSchedules = async (req, res) => {
     
     let query = `
       SELECT s.*, 
-             b.id as bin_id_ref, b.location as bin_location, b.status as bin_status, b.fill_level,
-             u.name as collector_name
+      b.bin_id as bin_id_ref, b.location as bin_location, b.status as bin_status, b.fill_level,
+      u.name as collector_name
       FROM schedules s
       LEFT JOIN bins b ON s.bin_id = b.id
       LEFT JOIN users u ON s.collector_id = u.id
@@ -146,7 +146,7 @@ exports.updateSchedule = async (req, res) => {
     }
 
     // If status is being set to completed, update completed_at
-    const completedAt = status === 'completed' ? 'NOW()' : 'completed_at';
+    // const completed_at = status === 'completed' ? 'NOW()' : 'completed_at';
 
     await db.query(
       `UPDATE schedules 
