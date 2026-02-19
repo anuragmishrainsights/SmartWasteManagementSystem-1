@@ -145,7 +145,7 @@ exports.getCollectionTrends = async (req, res) => {
         COUNT(*) as collections,
         COALESCE(SUM(waste_amount), 0) as total_waste
       FROM collection_history
-      WHERE collection_date >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
+      WHERE collection_date >= DATE_SUB(NOW(), INTERVAL ? DAY)
       GROUP BY DATE(collection_date)
       ORDER BY date ASC
     `, [parseInt(days)]);

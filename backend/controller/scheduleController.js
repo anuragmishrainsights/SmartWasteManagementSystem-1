@@ -11,7 +11,7 @@ exports.getAllSchedules = async (req, res) => {
       SELECT s.*, 
              b.location as bin_location, b.status as bin_status, b.fill_level,
              u.name as collector_name
-      FROM schedules s
+      FROM collection_schedules s
       LEFT JOIN bins b ON s.bin_id = b.id
       LEFT JOIN users u ON s.collector_id = u.id
       WHERE 1=1
@@ -66,7 +66,7 @@ exports.getSchedule = async (req, res) => {
       `SELECT s.*, 
               b.location as bin_location, b.latitude, b.longitude, b.status as bin_status, b.fill_level,
               u.name as collector_name, u.phone as collector_phone
-       FROM schedules s
+       FROM collection_schedules s
        LEFT JOIN bins b ON s.bin_id = b.id
        LEFT JOIN users u ON s.collector_id = u.id
        WHERE s.id = ?`,
@@ -101,14 +101,14 @@ exports.createSchedule = async (req, res) => {
     const { bin_id, collector_id, scheduled_date, scheduled_time, route, status } = req.body;
 
     const [result] = await db.query(
-      `INSERT INTO schedules (bin_id, collector_id, scheduled_date, scheduled_time, route, status)
+      `INSERT INTO collection_schedules (bin_id, collector_id, scheduled_date, scheduled_time, route, status)
        VALUES (?, ?, ?, ?, ?, ?)`,
       [bin_id, collector_id || null, scheduled_date, scheduled_time || '09:00:00', route || null, status || 'pending']
     );
 
     const [newSchedule] = await db.query(
       `SELECT s.*, b.location as bin_location, u.name as collector_name
-       FROM schedules s
+       FROM collection_schedules s
        LEFT JOIN bins b ON s.bin_id = b.id
        LEFT JOIN users u ON s.collector_id = u.id
        WHERE s.id = ?`,
@@ -136,7 +136,7 @@ exports.updateSchedule = async (req, res) => {
   try {
     const { collector_id, scheduled_date, scheduled_time, status, route } = req.body;
 
-    const [schedules] = await db.query('SELECT * FROM schedules WHERE id = ?', [req.params.id]);
+    const [schedules] = await db.query('SELECT * FROM collection_schedules WHERE id = ?', [req.params.id]);
 
     if (schedules.length === 0) {
       return res.status(404).json({
@@ -149,7 +149,7 @@ exports.updateSchedule = async (req, res) => {
     // status === 'completed' ? 'NOW()' : 'completed_at';
 
     await db.query(
-      `UPDATE schedules 
+      `UPDATE collection_schedules 
        SET collector_id = COALESCE(?, collector_id),
            scheduled_date = COALESCE(?, scheduled_date),
            scheduled_time = COALESCE(?, scheduled_time),
@@ -162,7 +162,7 @@ exports.updateSchedule = async (req, res) => {
 
     const [updatedSchedule] = await db.query(
       `SELECT s.*, b.location as bin_location, u.name as collector_name
-       FROM schedules s
+       FROM collection_schedules s
        LEFT JOIN bins b ON s.bin_id = b.id
        LEFT JOIN users u ON s.collector_id = u.id
        WHERE s.id = ?`,
@@ -188,7 +188,7 @@ exports.updateSchedule = async (req, res) => {
 // @access  Private (Admin only)
 exports.deleteSchedule = async (req, res) => {
   try {
-    const [schedules] = await db.query('SELECT * FROM schedules WHERE id = ?', [req.params.id]);
+    const [schedules] = await db.query('SELECT * FROM collection_schedules WHERE id = ?', [req.params.id]);
 
     if (schedules.length === 0) {
       return res.status(404).json({
@@ -197,7 +197,7 @@ exports.deleteSchedule = async (req, res) => {
       });
     }
 
-    await db.query('DELETE FROM schedules WHERE id = ?', [req.params.id]);
+    await db.query('DELETE FROM collection_schedules WHERE id = ?', [req.params.id]);
 
     res.json({
       success: true,
