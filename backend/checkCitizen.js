@@ -11,7 +11,7 @@ async function checkCitizen() {
       ['citizen@smartwaste.com']
     );
 
-    if (users[0].length === 0) {
+    if (!users || users.length === 0 || users[0].length === 0) {
       console.log('❌ Citizen user not found!');
       process.exit(1);
     }
