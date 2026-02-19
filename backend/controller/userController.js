@@ -119,6 +119,7 @@ exports.updateUser = async (req, res) => {
     updates.push('updated_at = CURRENT_TIMESTAMP');
     values.push(userId);
 
+    values.push(userId);
     await db.query(
       `UPDATE users SET ${updates.join(', ')} WHERE id = ?`,
       values
