@@ -20,7 +20,7 @@ exports.getDashboardStats = async (req, res) => {
       SELECT 
         COUNT(*) as total_schedules,
         SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending_schedules,
-        SUM(CASE WHEN status = 'completed' AND DATE(completed_at) = CURDATE() THEN 1 ELSE 0 END) as completed_today
+        SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed_today
       FROM collection_schedules
       WHERE scheduled_date <= CURDATE()
     `);
@@ -30,7 +30,7 @@ exports.getDashboardStats = async (req, res) => {
       SELECT 
         COUNT(*) as total_reports,
         SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending_reports,
-        SUM(CASE WHEN status IN ('resolved', 'closed') AND DATE(resolved_at) = CURDATE() THEN 1 ELSE 0 END) as resolved_today
+        SUM(CASE WHEN status IN ('resolved', 'closed') THEN 1 ELSE 0 END) as resolved_today
       FROM reports
     `);
 
@@ -96,7 +96,7 @@ exports.getRecentActivity = async (req, res) => {
         u.name as user_name,
         ch.waste_amount as amount
       FROM collection_history ch
-      LEFT JOIN bins b ON ch.bin_id = b.id
+      LEFT JOIN bins b ON ch.bin_id = b.bin_id
       LEFT JOIN users u ON ch.collector_id = u.id
       ORDER BY ch.collection_date DESC
       LIMIT ?)
@@ -110,7 +110,7 @@ exports.getRecentActivity = async (req, res) => {
         u.name as user_name,
         NULL as amount
       FROM reports r
-      LEFT JOIN bins b ON r.bin_id = b.id
+      LEFT JOIN bins b ON r.bin_id = b.bin_id
       LEFT JOIN users u ON r.user_id = u.id
       ORDER BY r.created_at DESC
       LIMIT ?)
