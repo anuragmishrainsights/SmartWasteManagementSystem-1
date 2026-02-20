@@ -24,14 +24,14 @@ exports.protect = async (req, res, next) => {
         [decoded.id]
       );
 
-      if (!users || users.length === 0 || users[0].length === 0) {
+      if (!users || users.length === 0 || users[0] === undefined) {
         return res.status(401).json({
           success: false,
           message: 'User not found'
         });
       }
 
-      req.user = users[0][0];
+      req.user = users[0];
       next();
     } catch (error) {
       return res.status(401).json({
@@ -49,10 +49,10 @@ exports.protect = async (req, res, next) => {
 
 exports.authorize = (...roles) => {
   return (req, res, next) => {
-    if (!roles.includes(req.user.role)) {
+    if (!req.user || !roles.includes(req.user.role)) {
       return res.status(403).json({
         success: false,
-        message: `User role '${req.user.role}' is not authorized to access this route`
+        message: `User role '${req.user ? req.user.role : 'undefined'}' is not authorized to access this route`
       });
     }
     next();
